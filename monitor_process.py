@@ -1,22 +1,25 @@
 import psutil
 import subprocess
-from time import sleep
+
 import os
+import threading
+from time import sleep, time
+
+import requests
+
 
 TIME_STEP = 1
-WATCHER_IP = "0.0.0.0"
+WATCHER_IP = "http://0.0.0.0"
 WATCHER_STEP = "/proc/step"
-WATCHER_START = "/proc/start"
-WATCHER_END = "/proc/end"
 
-SERVER_IP = "localhost"
+SERVER_IP = "http://localhost:50123"
 SERVER_END = "/task/{}/end"   # SERVER_END.format(taskID)
 
 
-
-class Monitor():
+class Monitor(threading.Thread):
 
     def __init__(self, taskID, task_array):
+        threading.Thread.__init__(self)
         self.taskID = taskID
         self.task_array = task_array
 
@@ -33,46 +36,66 @@ class Monitor():
         pid = self._run_task()
 
         p = psutil.Process(pid)
-        # p.status() != "zombie"  <--- czy dobre?!?!?!
         while psutil.pid_exists(pid) and p.status() != "zombie":
             try:
+
                 proc_info = p.as_dict(attrs=[
                     'cpu_percent',
                     'cpu_times',
                     'status',
                     'num_threads',
-                    'memory_full_info'
+                    'memory_full_info',
+                    'io_counters'
                 ])
                 proc_info['cpu_times'] = dict(proc_info['cpu_times']._asdict())
                 proc_info['memory_full_info'] = dict(proc_info['memory_full_info']._asdict())
+                proc_info['io_counters'] = dict(proc_info['io_counters']._asdict())
+
+                proc_info['id'] = self.taskID
+                proc_info['timestamp'] = time()
 
                 # add task info
 
-            except:
+            except Exception as e:
+                print "Process probably exited.", e
                 break
-                print "Process probably exited"
 
             self._send_proc_info(proc_info)
             sleep(TIME_STEP)
 
-        # get here result from self.output ?
+        self.output.close()
+        self._send_end_info()
+
 
     def _run_task(self):
         p = subprocess.Popen(self.task_array, stdout=self.output)
         return p.pid
 
-    def _send_start_info(self, proc_info):
-        pass
-        # send REST to Watcher
-        # NOTE: probably it should be done from WorkerServer. Because of the task parameters
-
     def _send_proc_info(self, proc_info):
         print proc_info
-        # send REST to Watcher
+        print
 
-    def _send_end_info(self, proc_info):
-        pass
-        # send REST to WorkerServer(?)
+        watcher_url = WATCHER_IP + WATCHER_STEP
+        try:
+            response = requests.post(watcher_url, data=proc_info)
+        except requests.exceptions.ConnectionError as e:
+            print e
+            # TODO: store proc_info for later post
+
+
+    def _send_end_info(self):
+        server_url = SERVER_IP + SERVER_END.format(self.taskID)
+        data = "some data"
+
+        while True:
+            try:
+                response = requests.post(server_url, data=data)
+            except requests.exceptions.ConnectionError as e:
+                print e
+
+                sleep(1)
+                continue
+            break
 
 
 
@@ -81,4 +104,4 @@ if __name__ == '__main__':
     task = ["python2.7", "monte_carlo.py", "" + str(taskID)]
 
     monitor = Monitor(taskID, task)
-    monitor.run()
+    monitor.start()

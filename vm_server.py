@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request
 import subprocess
 
-app = Flask(__name__, template_folder='templates')
+from monitor_process import Monitor
+
+app = Flask(__name__)
 
 
 @app.route('/startTask/<taskID>', methods=["GET"])
@@ -9,8 +11,23 @@ def index(taskID):
     subprocess.call(["echo", "Hello World! " + taskID])
 
     # zwracamy odpowiedz http, bez czekania na wynik:
-    subprocess.Popen(["python2.7", "monte_carlo.py", "" + taskID])
+    # subprocess.Popen(["python2.7", "monte_carlo.py", "" + taskID])
+    task = ["python2.7", "monte_carlo.py", "" + str(taskID)]
+
+    monitor = Monitor(taskID, task)
+    monitor.start()
     print "--> when it is called?"
+
+
+    return "test"
+
+@app.route('/task/<taskID>/end', methods=["POST"])
+def task_end(taskID):
+    print "TASK ENDED!!!"
+    print taskID
+    print request.data
+
+
     return "test"
 
 
