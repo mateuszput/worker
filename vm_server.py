@@ -1,10 +1,15 @@
 from flask import Flask, render_template, request
 import subprocess
 
+from time import sleep, time
 from monitor_process import Monitor
+
+import requests
 
 app = Flask(__name__)
 
+SERVER_IP = "http://34.253.103.15"
+SERVER_END = "/returnResult"
 
 @app.route('/startTask/<taskID>', methods=["POST"])
 def index(taskID):
@@ -26,7 +31,17 @@ def task_end(taskID):
     print "TASK ENDED!!!"
     print taskID
     print request.data
+    data = "{\"id\":" + taskID + "," + "\"answer\": \"" + request.data + "\"}"
+    server_url = SERVER_IP + SERVER_END
+    while True:
+        try:
+            response = requests.post(server_url, data=data)
+        except requests.exceptions.ConnectionError as e:
+            print e
 
+            sleep(1)
+            continue
+        break
 
     return "test"
 
