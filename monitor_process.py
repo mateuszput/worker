@@ -86,7 +86,7 @@ class Monitor(threading.Thread):
     def _send_end_info(self):
         server_url = SERVER_IP + SERVER_END.format(self.taskID)
 
-        filename = "./outputs/{}".format(taskID)
+        filename = "./outputs/{}".format(self.taskID)
         self.output = open(filename, "r")
         data = self.output.read()
         self.output.close()
