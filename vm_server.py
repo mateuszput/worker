@@ -8,7 +8,7 @@ import requests
 
 app = Flask(__name__)
 
-SERVER_IP = "http://34.253.103.15"
+SERVER_IP = "http://34.253.103.15:8080"
 SERVER_END = "/returnResult"
 
 @app.route('/startTask/<taskID>', methods=["POST"])
