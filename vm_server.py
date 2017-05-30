@@ -40,4 +40,5 @@ def task_end(taskID):
 
 if __name__ == "__main__":
     # app.debug = True  # TODO remove before deployment
-    app.run(host='0.0.0.0', port=50123)
+    # app.run(host='0.0.0.0', port=50123)
+    app.run(host='0.0.0.0', port=80)
