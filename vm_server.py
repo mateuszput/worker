@@ -31,12 +31,17 @@ def task_end(taskID):
     print "TASK ENDED!!!"
     print taskID
     print request.data
-    data = "{\"id\":" + taskID + "," + "\"answer\": \"" + request.data + "\"}"
+
+    answer = (request.data).replace("'", "").replace("\n", " ").replace("\r", " ")
+
+    data = '{"id":' + taskID + ', "answer":"' + answer + '"}'
+    headers = {'content-type': 'application/json'}
+
     print "data to send: " + data
     server_url = SERVER_IP + SERVER_PATH
     while True:
         try:
-            response = requests.post(server_url, data=data)
+            response = requests.post(server_url, data=data, headers=headers)
         except requests.exceptions.ConnectionError as e:
             print e
 
