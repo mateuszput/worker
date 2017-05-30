@@ -9,7 +9,7 @@ import requests
 app = Flask(__name__)
 
 SERVER_IP = "http://34.253.103.15:8080"
-SERVER_END = "/returnResult"
+SERVER_PATH = "/returnResult"
 
 @app.route('/startTask/<taskID>', methods=["POST"])
 def index(taskID):
@@ -32,7 +32,8 @@ def task_end(taskID):
     print taskID
     print request.data
     data = "{\"id\":" + taskID + "," + "\"answer\": \"" + request.data + "\"}"
-    server_url = SERVER_IP + SERVER_END
+    print "data to send: " + data
+    server_url = SERVER_IP + SERVER_PATH
     while True:
         try:
             response = requests.post(server_url, data=data)
