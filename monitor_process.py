@@ -12,7 +12,7 @@ TIME_STEP = 1
 WATCHER_IP = "http://0.0.0.0"
 WATCHER_STEP = "/proc/step"
 
-SERVER_IP = "http://localhost:50123"
+SERVER_IP = "http://localhost"
 SERVER_END = "/task/{}/end"   # SERVER_END.format(taskID)
 
 
