@@ -6,7 +6,7 @@ from monitor_process import Monitor
 app = Flask(__name__)
 
 
-@app.route('/startTask/<taskID>', methods=["GET"])
+@app.route('/startTask/<taskID>', methods=["POST"])
 def index(taskID):
     subprocess.call(["echo", "Hello World! " + taskID])
 
