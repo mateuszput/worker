@@ -7,22 +7,28 @@ from time import sleep, time
 
 import requests
 
+from watcher_params import *
+from machine_params import machine_params
 
 TIME_STEP = 1
-WATCHER_IP = "http://0.0.0.0"
-WATCHER_STEP = "/proc/step"
-
 SERVER_IP = "http://localhost"
 SERVER_END = "/task/{}/end"   # SERVER_END.format(taskID)
 
 
 class Monitor(threading.Thread):
 
-    def __init__(self, taskID, task_array):
+    def __init__(self, taskID, taskType, taskParams):
         threading.Thread.__init__(self)
         self.taskID = taskID
-        self.task_array = task_array
 
+        self.taskType = taskType
+        self.taskParams = taskParams
+
+        # np. ["python2.7", "monte_carlo.py", "" + str(pointsNo)]
+        self.task_array = self._createTask(taskType, taskParams)
+
+
+        # create process output file
         filename = "./outputs/{}".format(taskID)
         if not os.path.exists(os.path.dirname(filename)):
             try:
@@ -38,6 +44,8 @@ class Monitor(threading.Thread):
         p = psutil.Process(pid)
         while psutil.pid_exists(pid) and p.status() != "zombie":
             try:
+
+                sys_info = {}
 
                 proc_info = p.as_dict(attrs=[
                     'cpu_percent',
@@ -60,7 +68,7 @@ class Monitor(threading.Thread):
                 print "Process probably exited.", e
                 break
 
-            self._send_proc_info(proc_info)
+            # self._send_proc_info(proc_info)  # send to watcher
             sleep(TIME_STEP)
 
         self.output.close()
@@ -88,24 +96,67 @@ class Monitor(threading.Thread):
 
         filename = "./outputs/{}".format(self.taskID)
         self.output = open(filename, "r")
-        data = self.output.read()
+        answer = self.output.read()
         self.output.close()
 
-        while True:
+        data = {}
+        data['answer'] = answer
+        data['taskType'] = self.taskType
+        data['taskParams'] = self.taskParams
+        data['executeStats'] = {}
+
+        headers = {'content-type': 'application/json'}
+
+        tries = 10
+        while tries > 0:
             try:
-                response = requests.post(server_url, data=data)
+                response = requests.post(server_url, json=data, headers=headers)
             except requests.exceptions.ConnectionError as e:
                 print e
 
-                sleep(1)
+                sleep(10)
+                tries -= 1
                 continue
             break
 
+    def _createTask(self, taskType, taskParams):
 
+        task = []
+        if taskType == "PI":
+            task.append("python2.7")
+            task.append("monte_carlo.py")
+            try:
+                task.append(str(taskParams["pointsNo"]))
+            except:
+                raise Exception("Wrong task parameters!")
+
+            # task.append("mpirun")
+            # task.append("-np")
+            # task.append(str(machine_params['CPUs']))
+            # task.append("./pi")
+            # try:
+            #     task.append(str(taskParams["pointsNo"]))
+            # except:
+            #     raise Exception("Wrong task parameters!")
+
+        elif taskType == "memtest":
+            task.append("memtest")
+            # TODO:...
+            task.append("--help")
+
+        elif taskType == "dd":
+            task.append("dd")
+            # TODO:...
+            task.append("--help")
+        else:
+            raise Exception("Wrong task!")
+
+        print task
+        return task
 
 if __name__ == '__main__':
     taskID = 1
-    task = ["python2.7", "monte_carlo.py", "" + str(taskID)]
+    task = ["python2.7", "monte_carlo.py", "" + str(20000)]
 
     monitor = Monitor(taskID, task)
     monitor.start()

@@ -30,7 +30,7 @@ import requests
 print sys.argv
 print sys.argv[1]
 
-MAXN = 10000000
+MAXN = int(sys.argv[1])
 
 def dist(x, y):
     return (x * x + y * y)
