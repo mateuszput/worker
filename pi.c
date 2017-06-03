@@ -40,8 +40,9 @@ int main(int argc, char** argv) {
 
   if (world_rank == 0) {
 //    printf("pi is approximately %.16f\n", 4*(in_circle / (double) n));
-    printf("%f\n", etime - stime);  //time
- 
+//    printf("%f\n", etime - stime);  //time
+      printf("%.16f\n", 4*(in_circle / (double) n));
+
   }
   
   MPI_Finalize();
