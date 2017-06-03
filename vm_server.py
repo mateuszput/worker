@@ -5,6 +5,7 @@ from time import sleep, time
 from monitor_process import Monitor
 
 import requests
+import json
 
 from watcher_params import *
 from machine_params import machine_params
@@ -77,7 +78,7 @@ def send_res_to_server(taskID, answerData):
     tries = 10
     while tries > 0:
         try:
-            response = requests.post(server_url, data=data, headers=headers)
+            response = requests.post(server_url, data=json.dumps(data), headers=headers)
         except requests.exceptions.ConnectionError as e:
             print e
 
@@ -98,7 +99,7 @@ def send_res_to_watcher(data):
     tries = 2
     while tries > 0:
         try:
-            response = requests.post(server_url, data=data, headers=headers)
+            response = requests.post(server_url, data=json.dumps(data), headers=headers)
         except requests.exceptions.ConnectionError as e:
             print e
 

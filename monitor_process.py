@@ -4,6 +4,7 @@ import subprocess
 import os
 import threading
 from time import sleep, time
+import json
 
 import requests
 
@@ -110,7 +111,7 @@ class Monitor(threading.Thread):
         tries = 10
         while tries > 0:
             try:
-                response = requests.post(server_url, json=data, headers=headers)
+                response = requests.post(server_url, data=json.dumps(data), headers=headers)
             except requests.exceptions.ConnectionError as e:
                 print e
 
@@ -123,21 +124,21 @@ class Monitor(threading.Thread):
 
         task = []
         if taskType == "PI":
-            task.append("python2.7")
-            task.append("monte_carlo.py")
-            try:
-                task.append(str(taskParams["pointsNo"]))
-            except:
-                raise Exception("Wrong task parameters!")
-
-            # task.append("mpirun")
-            # task.append("-np")
-            # task.append(str(machine_params['CPUs']))
-            # task.append("./pi")
+            # task.append("python2.7")
+            # task.append("monte_carlo.py")
             # try:
             #     task.append(str(taskParams["pointsNo"]))
             # except:
             #     raise Exception("Wrong task parameters!")
+
+            task.append("/usr/local/bin/mpiexec")
+            task.append("-np")
+            task.append(str(machine_params['CPUs']))
+            task.append("./pi")
+            try:
+                task.append(str(taskParams["pointsNo"]))
+            except:
+                raise Exception("Wrong task parameters!")
 
         elif taskType == "memtest":
             task.append("memtest")
