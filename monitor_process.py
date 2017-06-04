@@ -11,7 +11,7 @@ import requests
 from watcher_params import *
 from machine_params import machine_params
 
-TIME_STEP = 1
+TIME_STEP = 0.2
 SERVER_IP = "http://localhost"
 SERVER_END = "/task/{}/end"   # SERVER_END.format(taskID)
 
@@ -42,28 +42,87 @@ class Monitor(threading.Thread):
     def run(self):
         pid = self._run_task()
 
+        proc_stats = {
+            'cpu_percent' : 0,
+            'cpu_times' : {'user': 0, 'system': 0},
+            'ram_usage' : 0,
+            'io_counters': { 'read_bytes': 0, 'write_bytes': 0}
+        }
+
+        startTime = time()
         p = psutil.Process(pid)
+        collectedCount = 0
+
+        # for warmup?
+        proc_info = p.as_dict(attrs=[
+            'cpu_percent',
+            'cpu_times',
+            'memory_info',
+            'io_counters'
+        ])
+
+        sleep(2)
+
+        # I know that this is ugly. Feel free to change it if you have the time ;>
         while psutil.pid_exists(pid) and p.status() != "zombie":
             try:
-
-                sys_info = {}
-
                 proc_info = p.as_dict(attrs=[
                     'cpu_percent',
                     'cpu_times',
-                    'status',
-                    'num_threads',
-                    'memory_full_info',
+                    # 'status',
+                    # 'num_threads',
+                    'memory_info',
                     'io_counters'
                 ])
                 proc_info['cpu_times'] = dict(proc_info['cpu_times']._asdict())
-                proc_info['memory_full_info'] = dict(proc_info['memory_full_info']._asdict())
+                proc_info['memory_info'] = dict(proc_info['memory_info']._asdict())
                 proc_info['io_counters'] = dict(proc_info['io_counters']._asdict())
 
-                proc_info['id'] = self.taskID
-                proc_info['timestamp'] = time()
+                cpu_percent = proc_info['cpu_percent']
+                cpu_times_user = proc_info['cpu_times']['user']
+                cpu_times_system = proc_info['cpu_times']['system']
+                proc_stats['ram_usage'] += proc_info['memory_info']['rss']
+                io_counters_read_bytes = proc_info['io_counters']['read_bytes']
+                io_counters_write_bytes = proc_info['io_counters']['write_bytes']
+                # print proc_info['memory_info']['rss']
 
-                # add task info
+                for child in p.children(recursive=True):
+                    proc_info = child.as_dict(attrs=[
+                        'cpu_percent',
+                        'cpu_times',
+                        'memory_info',
+                        'io_counters'
+                    ])
+                    proc_info['cpu_times'] = dict(proc_info['cpu_times']._asdict())
+                    proc_info['memory_info'] = dict(proc_info['memory_info']._asdict())
+                    proc_info['io_counters'] = dict(proc_info['io_counters']._asdict())
+
+                    cpu_percent += proc_info['cpu_percent']
+                    cpu_times_user += proc_info['cpu_times']['user']
+                    cpu_times_system += proc_info['cpu_times']['system']
+                    proc_stats['ram_usage'] += proc_info['memory_info']['rss']
+                    io_counters_read_bytes += proc_info['io_counters']['read_bytes']
+                    io_counters_write_bytes += proc_info['io_counters']['write_bytes']
+
+                    # print proc_info['memory_info']['rss']
+
+                # print "proc_info['cpu_percent']", cpu_percent / psutil.cpu_count()
+                proc_stats['cpu_percent'] += cpu_percent / psutil.cpu_count()
+                proc_stats['cpu_times']['user'] = cpu_times_user
+                proc_stats['cpu_times']['system'] = cpu_times_system
+                proc_stats['io_counters']['read_bytes'] = io_counters_read_bytes
+                proc_stats['io_counters']['write_bytes'] = io_counters_write_bytes
+
+                collectedCount += 1
+
+                # pproc_stats = proc_stats.copy()
+                # pproc_stats['cpu_percent'] /= collectedCount
+                # pproc_stats['ram_usage'] /= collectedCount
+                #
+                # import pprint
+                # print proc_stats['ram_usage']
+                # pp = pprint.PrettyPrinter(indent=4)
+                # pp.pprint(pproc_stats)
 
             except Exception as e:
                 print "Process probably exited.", e
@@ -71,6 +130,20 @@ class Monitor(threading.Thread):
 
             # self._send_proc_info(proc_info)  # send to watcher
             sleep(TIME_STEP)
+
+
+        endTime = time()
+
+        # print proc_stats['ram_usage']
+        proc_stats['cpu_percent'] /= collectedCount
+        proc_stats['ram_usage'] /= collectedCount
+        proc_stats['execTime'] = endTime - startTime
+
+        # import pprint
+        # pp = pprint.PrettyPrinter(indent=4)
+        # pp.pprint(proc_stats)
+
+        self.proc_stats = proc_stats
 
         self.output.close()
         self._send_end_info()
@@ -104,7 +177,7 @@ class Monitor(threading.Thread):
         data['answer'] = answer
         data['taskType'] = self.taskType
         data['taskParams'] = self.taskParams
-        data['executeStats'] = {}
+        data['executeStats'] = self.proc_stats
 
         headers = {'content-type': 'application/json'}
 
@@ -157,7 +230,9 @@ class Monitor(threading.Thread):
 
 if __name__ == '__main__':
     taskID = 1
-    task = ["python2.7", "monte_carlo.py", "" + str(20000)]
+    # task = ["python2.7", "monte_carlo.py", "" + str(20000)]
+    taskType = 'PI'
+    taskParams = {'pointsNo': 20000000}
 
-    monitor = Monitor(taskID, task)
+    monitor = Monitor(taskID, taskType, taskParams)
     monitor.start()
