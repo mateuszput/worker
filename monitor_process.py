@@ -136,7 +136,7 @@ class Monitor(threading.Thread):
             task.append(str(machine_params['CPUs']))
             task.append("./pi")
             try:
-                task.append(str(taskParams["pointsNo"]))
+                task.append(str(taskParams[0]))
             except:
                 raise Exception("Wrong task parameters!")
 
