@@ -22,9 +22,15 @@ to_learn_output = None
 
 @app.route('/startTask/<taskID>', methods=["POST"])
 def index(taskID):
-    print request.json
+    print 'headers:' ,request.headers
+    print 'values::' ,request.values
+    print 'args:   ' ,request.args
+    print 'form:   ' ,request.form
 
-    taskType = request.json["type"]
+    print 'data:   ' ,request.data
+    print 'json:   ',request.json
+
+    taskType = request.json["taskType"]
     taskParams = request.json["taskParams"]
 
     try:
