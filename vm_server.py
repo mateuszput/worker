@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import subprocess
 
+import os
 from time import sleep, time
 from monitor_process import Monitor
 
@@ -15,6 +16,7 @@ app = Flask(__name__)
 SERVER_IP = "http://34.253.103.15:8080"
 SERVER_PATH = "/returnResult"
 
+to_learn_output = None
 
 # =========================== REST API ========================================
 
@@ -96,6 +98,10 @@ def send_res_to_watcher(data):
     print "@@@\tdata to send: " + str(data)
     server_url = WATCHER_IP + WATCHER_END
 
+    to_learn_output = open(filename, 'a')
+    to_learn_output.write(json.dumps(data) + "\n")
+    to_learn_output.close()
+
     tries = 2
     while tries > 0:
         try:
@@ -109,7 +115,18 @@ def send_res_to_watcher(data):
         break
 
 
+filename = "./csvs/to_learn.jsons"
 
 if __name__ == "__main__":
+    # create file for CSV
+    if not os.path.exists(os.path.dirname(filename)):
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+    to_learn_output = open(filename, "w")
+    to_learn_output.close()
+
     # app.debug = True  # TODO remove before deployment
     app.run(host='0.0.0.0', port=80)

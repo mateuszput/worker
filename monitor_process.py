@@ -135,8 +135,9 @@ class Monitor(threading.Thread):
         endTime = time()
 
         # print proc_stats['ram_usage']
-        proc_stats['cpu_percent'] /= collectedCount
-        proc_stats['ram_usage'] /= collectedCount
+        if collectedCount:
+            proc_stats['cpu_percent'] /= collectedCount
+            proc_stats['ram_usage'] /= collectedCount
         proc_stats['execTime'] = endTime - startTime
 
         # import pprint
