@@ -9,16 +9,17 @@ int main(int argc, char** argv) {
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  int i;
-
+ 
+  long long n, i; 
+ 
   double stime, etime;
-  int n, sum, in_circle;
+  int sum, in_circle;
   double x, y;
 
   in_circle = 0;
   srand(time(NULL));
 
-  n = atoi(argv[1]);
+  n = atoll(argv[1]);
 
   MPI_Barrier(MPI_COMM_WORLD);  
   stime = MPI_Wtime();
