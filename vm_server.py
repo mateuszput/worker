@@ -86,7 +86,7 @@ def send_res_to_server(taskID, answerData):
     tries = 10
     while tries > 0:
         try:
-            response = requests.post(server_url, data=json.dumps(data), headers=headers)
+            response = requests.post(server_url, data=data, headers=headers)
         except requests.exceptions.ConnectionError as e:
             print e
 
