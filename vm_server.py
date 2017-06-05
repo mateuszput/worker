@@ -131,7 +131,7 @@ if __name__ == "__main__":
         except OSError as exc: # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
-    to_learn_output = open(filename, "w")
+    to_learn_output = open(filename, "a+")
     to_learn_output.close()
 
     # app.debug = True  # TODO remove before deployment
