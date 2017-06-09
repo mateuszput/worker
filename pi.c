@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  MPI_Reduce(&sum, &in_circle, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&sum, &in_circle, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   etime = MPI_Wtime();
 
