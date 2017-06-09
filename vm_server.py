@@ -108,17 +108,17 @@ def send_res_to_watcher(data):
     to_learn_output.write(json.dumps(data) + "\n")
     to_learn_output.close()
 
-    tries = 2
-    while tries > 0:
-        try:
-            response = requests.post(server_url, data=json.dumps(data), headers=headers)
-        except requests.exceptions.ConnectionError as e:
-            print e
+    #tries = 2
+    #while tries > 0:
+    #    try:
+    #        response = requests.post(server_url, data=json.dumps(data), headers=headers)
+    #    except requests.exceptions.ConnectionError as e:
+    #        print e
 
-            sleep(10)
-            tries -= 1
-            continue
-        break
+    #        sleep(10)
+    #        tries -= 1
+    #        continue
+    #    break
 
 
 filename = "./csvs/to_learn.jsons"
