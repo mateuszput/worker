@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   long long n, i; 
  
   double stime, etime;
-  int sum, in_circle;
+  long long sum, in_circle;
   double x, y;
 
   in_circle = 0;
